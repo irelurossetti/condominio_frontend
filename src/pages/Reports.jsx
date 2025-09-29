@@ -1,10 +1,21 @@
-// condominio_frontend/condominio_frontend-7959b787eebec9ec10c59aba1894ad64339d6e5b/src/pages/Reports.jsx
+// condominio_frontend/src/pages/Reports.jsx
 import { useEffect, useState } from "react";
 import { financeReport } from "../services/reports";
 import { fetchMe } from "../services/me";
-import FeesChart from '../components/FeesChart'; // Asegúrate de tener este componente para el gráfico
+import FeesChart from '../components/FeesChart';
+import ReportSkeleton from '../components/ReportSkeleton'; // <-- 1. Importa el Skeleton
 
 function money(n){ return `$${(n??0).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`; }
+
+// <-- 2. Crea el componente KPI Card
+function KpiCard({ title, value, className = '' }) {
+    return (
+        <div className="kpi-card">
+            <h4>{title}</h4>
+            <p className={`amount ${className}`}>{money(value)}</p>
+        </div>
+    );
+}
 
 export default function Reports(){
   const [me, setMe] = useState(null);
@@ -13,6 +24,7 @@ export default function Reports(){
   const [owner, setOwner] = useState("");
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchMe().then(setMe);
@@ -21,6 +33,7 @@ export default function Reports(){
   async function load(){
     if (!me) return;
     setLoading(true);
+    setError(null);
     try{
       const params = {
         from: from || undefined,
@@ -29,6 +42,10 @@ export default function Reports(){
       };
       const d = await financeReport(params);
       setData(d);
+    } catch (err) {
+        console.error("Fallo al cargar el reporte:", err);
+        setError("No se pudo generar el reporte. Por favor, intenta de nuevo.");
+        setData(null);
     } finally {
       setLoading(false);
     }
@@ -36,7 +53,7 @@ export default function Reports(){
 
   useEffect(()=>{
     if(me) load();
-  }, [me]); // Carga inicial cuando 'me' esté disponible
+  }, [me]);
 
   return (
     <div style={{ padding: 24, display:"grid", gap:24 }}>
@@ -48,17 +65,36 @@ export default function Reports(){
           <input placeholder="Filtrar por ID de Propietario" value={owner} onChange={e=>setOwner(e.target.value)} />
         )}
         <button onClick={load} disabled={loading}>{loading ? "Generando..." : "Generar Reporte"}</button>
-      </div>
-
-      {loading ? <p>Cargando reporte...</p> : !data ? <p>No hay datos para mostrar.</p> : (
+       
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: '12px' }}></div>
+            <button
+                onClick={() => alert('Próximamente: Exportar a CSV')}
+                disabled={!data || loading}
+                style={{ background: 'var(--silver-500)' }}
+            >
+                Exportar CSV
+           </button>
+           <button
+                onClick={() => window.print()}
+                disabled={!data || loading}
+                style={{ background: 'var(--silver-700)' }}
+        >
+            Imprimir / PDF
+        </button>
+      </div>              
+      {loading ? (
+        <ReportSkeleton /> // <-- 3. Usa el Skeleton
+      ) : error ? (
+        <p style={{ color: '#dc3545', fontWeight: 500 }}>{error}</p>
+      ) : !data || !data.overall ? (
+        <p>No hay datos para mostrar con los filtros seleccionados.</p>
+      ) : (
         <>
-          <section className="card">
-            <h3>Resumen General</h3>
-            <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
-              <div><h4>Emitido:</h4><p style={{fontSize: 24, margin: 0, color: 'var(--brand-700)'}}>{money(data.overall.issued)}</p></div>
-              <div><h4>Pagado:</h4><p style={{fontSize: 24, margin: 0, color: 'var(--brand-500)'}}>{money(data.overall.paid)}</p></div>
-              <div><h4>Pendiente:</h4><p style={{fontSize: 24, margin: 0, color: '#ef4444'}}>{money(data.overall.outstanding)}</p></div>
-            </div>
+          {/* --- 👇 4. Usa las KPI Cards --- */}
+          <section className="kpi-grid">
+              <KpiCard title="Emitido" value={data.overall.issued} className="issued" />
+              <KpiCard title="Pagado" value={data.overall.paid} className="paid" />
+              <KpiCard title="Pendiente" value={data.overall.outstanding} className="outstanding" />
           </section>
 
           <section className="card">
