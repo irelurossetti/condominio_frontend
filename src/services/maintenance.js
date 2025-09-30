@@ -39,3 +39,7 @@ export async function uploadMaintenanceAttachment(requestId, file) {
   });
   return data;
 }
+// 👇 AÑADE ESTA NUEVA FUNCIÓN
+// Obtiene los detalles completos de UNA ÚNICA solicitud de mantenimiento
+export const retrieveMaintenanceRequest = (id) =>
+  api.get(`maintenance-requests/${id}/`).then((r) => r.data);

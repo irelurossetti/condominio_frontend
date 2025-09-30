@@ -5,9 +5,10 @@ import { api } from "../api";
 export const listCommonAreas = () =>
   api.get("common-areas/").then((r) => r.data);
 
-// Obtiene mis reservaciones (para residentes) o todas (para admin)
-export const listReservations = () =>
-  api.get("reservations/").then((r) => r.data);
+// 👇 --- FUNCIÓN MODIFICADA --- 👇
+// Ahora acepta parámetros para filtrar en el backend
+export const listReservations = (params = {}) =>
+  api.get("reservations/", { params }).then((r) => r.data);
 
 // Crea una nueva reservación
 export const createReservation = (payload) =>
@@ -20,3 +21,4 @@ export const updateReservation = (id, payload) =>
 // Elimina una reserva
 export const deleteReservation = (id) =>
   api.delete(`reservations/${id}/`);
+

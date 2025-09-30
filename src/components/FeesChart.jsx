@@ -12,10 +12,12 @@ export default function FeesChart({ reportData }) {
   }
 
   const options = {
+    // 👇 --- LÍNEAS MODIFICADAS --- 👇
     responsive: true,
+    maintainAspectRatio: false, // <-- Muy importante para que respete la altura del div contenedor
     plugins: {
       legend: { position: 'top' },
-      title: { display: true, text: 'Finanzas por Período', font: { size: 16 } },
+      title: { display: true, text: 'Emitido vs. Pagado por Período' },
     },
     scales: { y: { beginAtZero: true } }
   };
